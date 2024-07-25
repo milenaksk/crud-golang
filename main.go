@@ -80,7 +80,20 @@ func Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {
+    if r.Method != "DELETE" {
+        http.Error(w, http.StatusText(405), http.StatusMethodNotAllowed) //405 não permitido
+        return
+    }
 
+    id := r.URL.Query().Get("id") // uga uga: adicionar declaração da variável `id`
+
+    _,err := db.Exec("DELETE FROM users WHERE id=$1;", id)
+    if err != nil {
+        fmt.Println("server failed to handle ", err)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
 }
 
 var db *sql.DB
