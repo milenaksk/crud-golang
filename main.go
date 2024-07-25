@@ -19,7 +19,38 @@ type User struct { //entidade e atributos
 //métodos
 
 func Read(w http.ResponseWriter, r *http.Request) {
-    // Sua implementação aqui
+    if r.Method != "GET" {
+        http.Error(w, http.StatusText(405), http.StatusMethodNotAllowed) //405 não permitido
+        return
+    }
+
+    rows, err := db.Query("SELECT * FROM users")
+    if err != nil {
+        fmt.Println("server failed to handle ", err)
+        return
+    }
+
+    defer rows.Close()
+
+    data := make([]User, 0)
+
+    for rows.Next() {
+        user := User{}
+        err := rows.Scan(&user.Id, &user.Name, &user.Email, &user.Age)
+        if err != nil {
+            fmt.Println("server failed to handle ", err)
+            return
+        }
+        data = append(data, user)
+    }
+
+    if err = rows.Err(); err != nil {
+        fmt.Println("server failed to handle ", err)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(data)
 }
 
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +75,14 @@ func Create(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(http.StatusCreated)
 }
 
+func Update(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func Delete(w http.ResponseWriter, r *http.Request) {
+
+}
+
 var db *sql.DB
 
 func init() {
@@ -61,6 +100,8 @@ func init() {
 }
 
 func main() {
+    http.HandleFunc("/users/update", Update)
+    http.HandleFunc("/users/delete", Delete)
     http.HandleFunc("/users/read", Read)
     http.HandleFunc("/users/create", Create)
     http.ListenAndServe(":8080", nil)
